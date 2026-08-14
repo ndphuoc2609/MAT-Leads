@@ -144,10 +144,14 @@ export function FlowLink({
       {/* desktop: horizontal */}
       <div className="relative hidden w-full items-center lg:flex">
         <span className="h-px w-full bg-border" />
+        <span className="absolute top-1/2 left-1/2 grid size-5 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface text-muted-foreground">
+          <ChevronRight className="size-3" />
+        </span>
         <span
           className="animate-flow-particle absolute top-1/2 left-0 size-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]"
           style={{ ["--flow-distance" as string]: "2.5rem" }}
         />
+
         {active ? (
           <span
             key={flightKey}
