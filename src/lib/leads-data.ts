@@ -65,7 +65,7 @@ function makeRng(seed: number) {
   };
 }
 
-const pick = <T,>(rng: () => number, arr: T[]) => arr[Math.floor(rng() * arr.length)];
+const pick = <T,>(rng: () => number, arr: T[]): T => arr[Math.floor(rng() * arr.length)] as T;
 
 export const CALL_STATUS_LABEL: Record<CallStatus, string> = {
   waiting: "Chờ gọi",
@@ -127,7 +127,7 @@ export function buildLeads(now: number): Lead[] {
       lead.lastCallAt = receivedAt + 8 * 60_000;
       lead.completedAt = receivedAt + 18 * 60_000;
       if (k < 12) {
-        lead.dealer = DEALERS[k % 5];
+        lead.dealer = DEALERS[k % 5] as string;
         lead.assignedAt = lead.completedAt + Math.floor(rng() * 20 + 2) * 60_000;
       }
     }
