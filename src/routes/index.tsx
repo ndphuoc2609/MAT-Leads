@@ -7,7 +7,7 @@ import { MetaLeadsSection } from "@/components/leads/meta-leads-section";
 import { CallCenterSection } from "@/components/leads/call-center-section";
 import { ProcessedSection } from "@/components/leads/processed-section";
 import { DealerSection } from "@/components/leads/dealer-section";
-import { Connector } from "@/components/leads/ui-bits";
+import { FlowLink } from "@/components/leads/flow-bits";
 import { SUCCESS_OUTCOMES, clockTime, type Lead } from "@/lib/leads-data";
 import { cn } from "@/lib/utils";
 
@@ -206,7 +206,7 @@ function Dashboard() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-[1440px] space-y-4 px-4 py-6 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-[1440px] space-y-3 px-4 py-4 sm:px-6 lg:px-8">
         <KpiRow
           metaTotal={total}
           called={called}
@@ -215,18 +215,17 @@ function Dashboard() {
           loading={loading}
         />
 
-        <div className="space-y-1">
+        <div className="grid items-stretch gap-2 lg:grid-cols-[minmax(0,1fr)_2.5rem_minmax(0,1fr)_2.5rem_minmax(0,1fr)]">
           <MetaLeadsSection
             leads={metaLeads}
-            total={total}
             now={now}
             loading={loading}
             searching={searching}
             onPush={pushToCallCenter}
           />
 
-          <FlightConnector
-            label="Chuyển sang Call Center"
+          <FlowLink
+            label="Sang Call Center"
             active={flight?.kind === "meta-call"}
             text={flight?.label ?? ""}
             flightKey={flight?.key}
@@ -241,7 +240,7 @@ function Dashboard() {
             onComplete={completeLead}
           />
 
-          <FlightConnector
+          <FlowLink
             label="Hoàn tất xử lý"
             active={flight?.kind === "call-processed"}
             text={flight?.label ?? ""}
@@ -249,47 +248,28 @@ function Dashboard() {
           />
 
           <ProcessedSection leads={processedLeads} loading={loading} searching={searching} />
+        </div>
 
-          <FlightConnector
-            label="Phân bổ về đại lý"
-            active={flight?.kind === "processed-dealer"}
-            text={flight?.label ?? ""}
-            flightKey={flight?.key}
-          />
+        <div className="relative flex flex-col items-center py-0.5" aria-hidden>
+          <span className="h-4 w-px bg-border" />
+          <span className="animate-flow-particle-y absolute top-0 left-1/2 size-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
+          {flight?.kind === "processed-dealer" ? (
+            <span
+              key={flight.key}
+              className="animate-lead-fly pointer-events-none absolute top-0 left-1/2 z-10 max-w-[70%] truncate rounded-full bg-primary px-2 py-0.5 text-[10px] font-medium text-primary-foreground shadow-md"
+            >
+              {flight.label}
+            </span>
+          ) : null}
         </div>
 
         <DealerSection leads={leads} now={now} loading={loading} />
 
-        <p className="pb-4 text-center text-[11px] text-muted-foreground">
-          Dữ liệu demo · {total} leads · mô phỏng luồng Meta Lead Ads → Call Center → Đại lý
+        <p className="pb-2 text-center text-[11px] text-muted-foreground">
+          Dữ liệu demo · {total} leads · Meta Lead Ads → Call Center → Đại lý
         </p>
       </main>
     </div>
   );
 }
 
-function FlightConnector({
-  label,
-  active,
-  text,
-  flightKey,
-}: {
-  label: string;
-  active?: boolean | undefined;
-  text: string;
-  flightKey?: number | undefined;
-}) {
-  return (
-    <div className="relative">
-      <Connector label={label} />
-      {active ? (
-        <span
-          key={flightKey}
-          className="animate-lead-fly pointer-events-none absolute top-0 left-1/2 z-10 max-w-[70%] truncate rounded-full bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground shadow-md"
-        >
-          {text}
-        </span>
-      ) : null}
-    </div>
-  );
-}

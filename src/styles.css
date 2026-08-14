@@ -204,6 +204,62 @@
   }
 }
 
+@keyframes lead-fly-x {
+  0% {
+    opacity: 0;
+    transform: translate(-14px, -50%) scale(0.9);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(0, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(46px, -50%) scale(0.86);
+  }
+}
+
+@keyframes flow-particle {
+  0% {
+    opacity: 0;
+    transform: translate(0, -50%) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--flow-distance, 48px), -50%) scale(0.6);
+  }
+}
+
+@keyframes flow-particle-y {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 26px) scale(0.6);
+  }
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 @utility animate-lead-enter {
   animation: lead-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -212,9 +268,30 @@
   animation: lead-fly 0.68s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
+@utility animate-lead-fly-x {
+  animation: lead-fly-x 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@utility animate-flow-particle {
+  animation: flow-particle 1.8s linear infinite;
+}
+
+@utility animate-flow-particle-y {
+  animation: flow-particle-y 1.8s linear infinite;
+}
+
+@utility animate-live-pulse {
+  animation: live-pulse 1.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-lead-enter,
-  .animate-lead-fly {
+  .animate-lead-fly,
+  .animate-lead-fly-x,
+  .animate-flow-particle,
+  .animate-flow-particle-y {
     animation-duration: 0.01ms;
+    animation-iteration-count: 1;
   }
 }
+
