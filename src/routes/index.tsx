@@ -7,7 +7,7 @@ import { MetaLeadsSection } from "@/components/leads/meta-leads-section";
 import { CallCenterSection } from "@/components/leads/call-center-section";
 import { ProcessedSection } from "@/components/leads/processed-section";
 import { DealerSection } from "@/components/leads/dealer-section";
-import { Connector } from "@/components/leads/ui-bits";
+import { FlowLink } from "@/components/leads/flow-bits";
 import { SUCCESS_OUTCOMES, clockTime, type Lead } from "@/lib/leads-data";
 import { cn } from "@/lib/utils";
 
