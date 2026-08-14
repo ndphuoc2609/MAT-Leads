@@ -275,9 +275,9 @@ function FlightConnector({
   flightKey,
 }: {
   label: string;
-  active?: boolean;
+  active?: boolean | undefined;
   text: string;
-  flightKey?: number;
+  flightKey?: number | undefined;
 }) {
   return (
     <div className="relative">
