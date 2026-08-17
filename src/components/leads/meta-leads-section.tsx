@@ -6,13 +6,11 @@ export function MetaLeadsSection({
   leads,
   now,
   loading,
-  searching,
   onPush,
 }: {
   leads: Lead[];
   now: number;
   loading: boolean;
-  searching: boolean;
   onPush: (id: string) => void;
 }) {
   const visible = leads.slice(0, 5);
@@ -24,12 +22,11 @@ export function MetaLeadsSection({
       icon={<Facebook className="size-3.5" />}
       count={leads.length}
       accent="navy"
-      live
     >
       {loading ? (
         <QueueSkeleton rows={5} />
       ) : visible.length === 0 ? (
-        <QueueEmpty text={searching ? "Không tìm thấy lead phù hợp." : "Chưa có lead mới."} />
+        <QueueEmpty text="Chưa có lead mới." />
       ) : (
         <>
           <ul className="space-y-1.5">
@@ -44,16 +41,16 @@ export function MetaLeadsSection({
                     Mới
                   </span>
                 }
-                action={
-                  <button
-                    onClick={() => onPush(lead.id)}
-                    title="Đẩy sang Call Center"
-                    aria-label="Đẩy sang Call Center"
-                    className="grid size-6 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
-                  >
-                    <ArrowRight className="size-3" />
-                  </button>
-                }
+                // action={
+                //   <button
+                //     onClick={() => onPush(lead.id)}
+                //     title="Đẩy sang Call Center"
+                //     aria-label={`Đẩy ${lead.name} sang Call Center`}
+                //     className="grid size-6 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+                //   >
+                //     <ArrowRight className="size-3" />
+                //   </button>
+                // }
               />
             ))}
           </ul>

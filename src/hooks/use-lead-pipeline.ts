@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  AGENTS,
   DEALERS,
   SUCCESS_OUTCOMES,
   buildLeads,
@@ -8,6 +7,7 @@ import {
   type Lead,
   type Outcome,
 } from "@/lib/leads-data";
+import { saveLeadSnapshot } from "@/lib/lead-snapshot";
 
 export type MoveKind = "meta-call" | "call-processed" | "processed-dealer" | null;
 
@@ -19,25 +19,30 @@ export function useLeadPipeline() {
   const [playing, setPlaying] = useState(true);
   const [flight, setFlight] = useState<{ kind: MoveKind; label: string; key: number } | null>(null);
   const seed = useRef(1);
+  const dealerCursor = useRef(12);
 
   const load = useCallback(() => {
     setLoading(true);
-    const t = window.setTimeout(() => {
-      const ts = Date.now();
-      setNow(ts);
-      setUpdatedAt(ts);
-      setLeads(buildLeads(ts));
+    const timer = window.setTimeout(() => {
+      const timestamp = Date.now();
+      setNow(timestamp);
+      setUpdatedAt(timestamp);
+      setLeads(buildLeads(timestamp));
       setLoading(false);
     }, 700);
-    return () => window.clearTimeout(t);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => load(), [load]);
 
   useEffect(() => {
-    const i = window.setInterval(() => setNow(Date.now()), 30_000);
-    return () => window.clearInterval(i);
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!loading) saveLeadSnapshot(leads);
+  }, [leads, loading]);
 
   const fly = (kind: MoveKind, label: string) => {
     setFlight({ kind, label, key: Date.now() });
@@ -47,81 +52,80 @@ export function useLeadPipeline() {
   const addLead = useCallback(() => {
     seed.current += 7919;
     const lead = newIncomingLead(Date.now(), seed.current);
-    setLeads((prev) => [lead, ...prev]);
+    setLeads((previous) => [lead, ...previous]);
     setUpdatedAt(Date.now());
   }, []);
 
-  /** Đẩy lead mới nhất từ Meta xuống Call Center */
   const pushToCallCenter = useCallback((id?: string) => {
-    setLeads((prev) => {
+    setLeads((previous) => {
       const target = id
-        ? prev.find((l) => l.id === id)
-        : prev.filter((l) => l.stage === "meta").sort((a, b) => b.receivedAt - a.receivedAt)[0];
-      if (!target) return prev;
+        ? previous.find((lead) => lead.id === id)
+        : previous
+            .filter((lead) => lead.stage === "meta")
+            .sort((a, b) => b.receivedAt - a.receivedAt)[0];
+      if (!target) return previous;
       fly("meta-call", target.name);
-      return prev.map((l) =>
-        l.id === target.id
+      return previous.map((lead) =>
+        lead.id === target.id
           ? {
-              ...l,
+              ...lead,
               stage: "call" as const,
-              callStatus: "calling" as const,
-              agent: AGENTS[Math.floor(Math.random() * AGENTS.length)] as string,
               lastCallAt: Date.now(),
               isNew: true,
             }
-          : l,
+          : lead,
       );
     });
     setUpdatedAt(Date.now());
   }, []);
 
   const completeLead = useCallback((id: string, outcome: Outcome) => {
-    setLeads((prev) => {
-      const target = prev.find((l) => l.id === id);
-      if (!target || target.stage !== "call") return prev;
+    setLeads((previous) => {
+      const target = previous.find((lead) => lead.id === id);
+      if (!target || target.stage !== "call") return previous;
+
       fly("call-processed", target.name);
-      const success = SUCCESS_OUTCOMES.includes(outcome);
-      const ts = Date.now();
-      if (success) {
+      const timestamp = Date.now();
+      if (SUCCESS_OUTCOMES.includes(outcome)) {
         window.setTimeout(() => {
-          const dealer = DEALERS[Math.floor(Math.random() * 5)] as string;
-          setLeads((cur) =>
-            cur.map((l) =>
-              l.id === id ? { ...l, dealer, assignedAt: Date.now(), isNew: true } : l,
+          const dealer = DEALERS[dealerCursor.current % DEALERS.length] as string;
+          dealerCursor.current += 1;
+          setLeads((current) =>
+            current.map((lead) =>
+              lead.id === id ? { ...lead, dealer, assignedAt: Date.now(), isNew: true } : lead,
             ),
           );
           fly("processed-dealer", `${target.name} → đại lý`);
         }, 750);
       }
-      return prev.map((l) =>
-        l.id === id
+
+      return previous.map((lead) =>
+        lead.id === id
           ? {
-              ...l,
+              ...lead,
               stage: "processed" as const,
               outcome,
-              callStatus: outcome === "unreachable" ? ("unreachable" as const) : ("contacted" as const),
-              completedAt: ts,
-              lastCallAt: l.lastCallAt ?? ts,
+              completedAt: timestamp,
+              lastCallAt: lead.lastCallAt ?? timestamp,
               isNew: true,
             }
-          : l,
+          : lead,
       );
     });
     setUpdatedAt(Date.now());
   }, []);
 
-  // Autoplay
   useEffect(() => {
     if (!playing || loading) return;
-    const i = window.setInterval(() => {
+    const timer = window.setInterval(() => {
       const roll = Math.random();
       if (roll < 0.35) {
         addLead();
       } else if (roll < 0.7) {
         pushToCallCenter();
       } else {
-        setLeads((prev) => {
-          const candidate = prev.find((l) => l.stage === "call" && l.callStatus !== "waiting");
+        setLeads((previous) => {
+          const candidate = previous.find((lead) => lead.stage === "call");
           if (candidate) {
             const outcomes: Outcome[] = [
               "qualified",
@@ -130,15 +134,15 @@ export function useLeadPipeline() {
               "not_interested",
               "unreachable",
             ];
-            const o = outcomes[Math.floor(Math.random() * outcomes.length)] as Outcome;
-            window.setTimeout(() => completeLead(candidate.id, o), 0);
+            const outcome = outcomes[Math.floor(Math.random() * outcomes.length)] as Outcome;
+            window.setTimeout(() => completeLead(candidate.id, outcome), 0);
           }
-          return prev;
+          return previous;
         });
       }
       setUpdatedAt(Date.now());
     }, 4200);
-    return () => window.clearInterval(i);
+    return () => window.clearInterval(timer);
   }, [playing, loading, addLead, pushToCallCenter, completeLead]);
 
   return {

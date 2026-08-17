@@ -1,5 +1,4 @@
 export type Stage = "meta" | "call" | "processed";
-export type CallStatus = "waiting" | "calling" | "contacted" | "unreachable";
 export type Outcome = "qualified" | "testdrive" | "not_interested" | "unreachable";
 
 export type Lead = {
@@ -10,8 +9,6 @@ export type Lead = {
   campaign: string;
   receivedAt: number;
   stage: Stage;
-  callStatus: CallStatus;
-  agent?: string;
   lastCallAt?: number;
   outcome?: Outcome;
   completedAt?: number;
@@ -20,14 +17,73 @@ export type Lead = {
   isNew?: boolean;
 };
 
-export const DEALERS = [
-  "Hyundai Đông Đô",
-  "Hyundai Gia Định",
-  "Hyundai Long Biên",
-  "Hyundai Trường Chinh",
-  "Hyundai Bình Dương",
-  "Hyundai Ngọc An",
+const OLD_PROVINCES = [
+  "Hà Nội",
+  "TP. Hồ Chí Minh",
+  "Hải Phòng",
+  "Đà Nẵng",
+  "Cần Thơ",
+  "An Giang",
+  "Bà Rịa - Vũng Tàu",
+  "Bắc Giang",
+  "Bắc Kạn",
+  "Bạc Liêu",
+  "Bắc Ninh",
+  "Bến Tre",
+  "Bình Định",
+  "Bình Dương",
+  "Bình Phước",
+  "Bình Thuận",
+  "Cà Mau",
+  "Cao Bằng",
+  "Đắk Lắk",
+  "Đắk Nông",
+  "Điện Biên",
+  "Đồng Nai",
+  "Đồng Tháp",
+  "Gia Lai",
+  "Hà Giang",
+  "Hà Nam",
+  "Hà Tĩnh",
+  "Hải Dương",
+  "Hậu Giang",
+  "Hòa Bình",
+  "Hưng Yên",
+  "Khánh Hòa",
+  "Kiên Giang",
+  "Kon Tum",
+  "Lai Châu",
+  "Lâm Đồng",
+  "Lạng Sơn",
+  "Lào Cai",
+  "Long An",
+  "Nam Định",
+  "Nghệ An",
+  "Ninh Bình",
+  "Ninh Thuận",
+  "Phú Thọ",
+  "Phú Yên",
+  "Quảng Bình",
+  "Quảng Nam",
+  "Quảng Ngãi",
+  "Quảng Ninh",
+  "Quảng Trị",
+  "Sóc Trăng",
+  "Sơn La",
+  "Tây Ninh",
+  "Thái Bình",
+  "Thái Nguyên",
+  "Thanh Hóa",
+  "Thừa Thiên Huế",
+  "Tiền Giang",
+  "Trà Vinh",
+  "Tuyên Quang",
+  "Vĩnh Long",
+  "Vĩnh Phúc",
+  "Yên Bái",
 ];
+
+export const DEALERS = OLD_PROVINCES.map((province) => `Hyundai ${province}`);
 
 export const MODELS = ["Creta", "Accent", "Tucson", "Santa Fe", "Venue", "Palisade"];
 
@@ -40,20 +96,29 @@ export const CAMPAIGNS = [
   "Palisade Khách VIP",
 ];
 
-export const AGENTS = [
-  "Ngọc Ánh",
-  "Minh Tuấn",
-  "Thu Hà",
-  "Quốc Bảo",
-  "Phương Linh",
-  "Hữu Nghĩa",
-];
-
 const FIRST = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Vũ", "Đặng", "Bùi", "Đỗ", "Ngô"];
 const MID = ["Văn", "Thị", "Minh", "Quốc", "Hữu", "Thanh", "Ngọc", "Gia"];
 const LAST = [
-  "An", "Bình", "Cường", "Dũng", "Giang", "Hà", "Hải", "Hùng", "Khanh", "Lâm",
-  "Mai", "Nam", "Oanh", "Phúc", "Quân", "Sơn", "Trang", "Tú", "Vy", "Yến",
+  "An",
+  "Bình",
+  "Cường",
+  "Dũng",
+  "Giang",
+  "Hà",
+  "Hải",
+  "Hùng",
+  "Khanh",
+  "Lâm",
+  "Mai",
+  "Nam",
+  "Oanh",
+  "Phúc",
+  "Quân",
+  "Sơn",
+  "Trang",
+  "Tú",
+  "Vy",
+  "Yến",
 ];
 
 // Deterministic PRNG so SSR and client render identical data.
@@ -65,29 +130,20 @@ function makeRng(seed: number) {
   };
 }
 
-const pick = <T,>(rng: () => number, arr: T[]): T => arr[Math.floor(rng() * arr.length)] as T;
-
-export const CALL_STATUS_LABEL: Record<CallStatus, string> = {
-  waiting: "Chờ gọi",
-  calling: "Đang gọi",
-  contacted: "Đã liên hệ",
-  unreachable: "Không liên hệ được",
-};
-
-export const OUTCOME_LABEL: Record<Outcome, string> = {
-  qualified: "Đủ điều kiện",
-  testdrive: "Hẹn lái thử",
-  not_interested: "Không quan tâm",
-  unreachable: "Không liên hệ được",
-};
+const pick = <T>(rng: () => number, arr: T[]): T => arr[Math.floor(rng() * arr.length)] as T;
 
 export const SUCCESS_OUTCOMES: Outcome[] = ["qualified", "testdrive"];
+
+// Phân bổ có trọng số để dữ liệu demo có độ chênh rõ, thay vì mỗi đại lý chỉ 1–2 lead.
+const DEMO_DEALER_DISTRIBUTION = [
+  0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 6, 6, 7, 7, 8, 9, 10, 11,
+];
 
 export function maskPhone(phone: string) {
   return phone.slice(0, 4) + " ••• " + phone.slice(-3);
 }
 
-/** 62 leads: 10 mới từ Meta, 12 ở Call Center (8 đã gọi), 40 đã xử lý → 48 cuộc gọi. */
+/** Dữ liệu nền cùng các lead phân bổ bổ sung để số liệu demo rõ ràng hơn. */
 export function buildLeads(now: number): Lead[] {
   const rng = makeRng(20260814);
   const leads: Lead[] = [];
@@ -105,34 +161,51 @@ export function buildLeads(now: number): Lead[] {
       campaign: pick(rng, CAMPAIGNS),
       receivedAt,
       stage: "meta",
-      callStatus: "waiting",
     };
 
     if (i < 10) {
       // mới từ Meta
     } else if (i < 22) {
       lead.stage = "call";
-      const k = i - 10;
-      lead.callStatus =
-        k < 4 ? "waiting" : k < 7 ? "calling" : k < 10 ? "contacted" : "unreachable";
-      lead.agent = pick(rng, AGENTS);
-      if (lead.callStatus !== "waiting") lead.lastCallAt = receivedAt + 9 * 60_000;
+      lead.lastCallAt = receivedAt + 9 * 60_000;
     } else {
       lead.stage = "processed";
       const k = i - 22;
-      lead.callStatus = k < 31 ? "contacted" : "unreachable";
       lead.outcome =
         k < 17 ? "qualified" : k < 31 ? "testdrive" : k < 35 ? "not_interested" : "unreachable";
-      lead.agent = pick(rng, AGENTS);
       lead.lastCallAt = receivedAt + 8 * 60_000;
       lead.completedAt = receivedAt + 18 * 60_000;
-      if (k < 12) {
-        lead.dealer = DEALERS[k % 5] as string;
+      if (k < DEMO_DEALER_DISTRIBUTION.length) {
+        const dealerIndex = DEMO_DEALER_DISTRIBUTION[k] as number;
+        lead.dealer = DEALERS[dealerIndex] as string;
         lead.assignedAt = lead.completedAt + Math.floor(rng() * 20 + 2) * 60_000;
       }
     }
 
     leads.push(lead);
+  }
+
+  const assignedSeeds = leads.filter((lead) => lead.dealer && lead.assignedAt);
+  for (let copy = 1; copy <= 2; copy++) {
+    assignedSeeds.forEach((seedLead, index) => {
+      const receivedAt = seedLead.receivedAt - (copy * assignedSeeds.length + index) * 5 * 60_000;
+      const completedAt = receivedAt + 18 * 60_000;
+
+      leads.push({
+        id: `LD-${5000 + copy * 100 + index}`,
+        name: `${pick(rng, FIRST)} ${pick(rng, MID)} ${pick(rng, LAST)}`,
+        phone: `09${Math.floor(rng() * 90 + 10)}${Math.floor(rng() * 900000 + 100000)}`,
+        model: pick(rng, MODELS),
+        campaign: pick(rng, CAMPAIGNS),
+        receivedAt,
+        stage: "processed",
+        lastCallAt: receivedAt + 8 * 60_000,
+        outcome: seedLead.outcome ?? "qualified",
+        completedAt,
+        dealer: seedLead.dealer,
+        assignedAt: completedAt + Math.floor(rng() * 20 + 2) * 60_000,
+      });
+    });
   }
 
   return leads.sort((a, b) => b.receivedAt - a.receivedAt);
@@ -148,7 +221,6 @@ export function newIncomingLead(now: number, seed: number): Lead {
     campaign: pick(rng, CAMPAIGNS),
     receivedAt: now,
     stage: "meta",
-    callStatus: "waiting",
     isNew: true,
   };
 }

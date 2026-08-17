@@ -1,11 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import {
-  CALL_STATUS_LABEL,
-  OUTCOME_LABEL,
-  type CallStatus,
-  type Outcome,
-} from "@/lib/leads-data";
+import { SUCCESS_OUTCOMES, type Outcome } from "@/lib/leads-data";
 
 export function SectionCard({
   title,
@@ -46,24 +41,25 @@ export function SectionCard({
 const badgeBase =
   "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap";
 
-export function CallStatusBadge({ status }: { status: CallStatus }) {
-  const styles: Record<CallStatus, string> = {
-    waiting: "bg-muted text-muted-foreground",
-    calling: "bg-primary/10 text-primary",
-    contacted: "bg-success-soft text-success-foreground",
-    unreachable: "bg-warning-soft text-warning-foreground",
-  };
-  return <span className={cn(badgeBase, styles[status])}>{CALL_STATUS_LABEL[status]}</span>;
+export function CallStatusBadge() {
+  return <span className={cn(badgeBase, "bg-primary/10 text-primary")}>Đang xử lý</span>;
 }
 
-export function OutcomeBadge({ outcome }: { outcome: Outcome }) {
-  const styles: Record<Outcome, string> = {
-    qualified: "bg-success-soft text-success-foreground",
-    testdrive: "bg-success-soft text-success-foreground",
-    not_interested: "bg-warning-soft text-warning-foreground",
-    unreachable: "bg-muted text-muted-foreground",
-  };
-  return <span className={cn(badgeBase, styles[outcome])}>{OUTCOME_LABEL[outcome]}</span>;
+export function ProcessedStatusBadge({ outcome }: { outcome: Outcome | undefined }) {
+  const interested = outcome ? SUCCESS_OUTCOMES.includes(outcome) : true;
+
+  return (
+    <span
+      className={cn(
+        badgeBase,
+        interested
+          ? "bg-success-soft text-success-foreground"
+          : "bg-warning-soft text-warning-foreground",
+      )}
+    >
+      {interested ? "Quan tâm" : "Không quan tâm"}
+    </span>
+  );
 }
 
 export function RowSkeleton({ rows = 4 }: { rows?: number }) {

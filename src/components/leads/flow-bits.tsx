@@ -9,7 +9,6 @@ export function FlowColumn({
   icon,
   count,
   accent = "primary",
-  live,
   toolbar,
   children,
 }: {
@@ -18,7 +17,6 @@ export function FlowColumn({
   icon: ReactNode;
   count: number;
   accent?: "navy" | "primary" | "success";
-  live?: boolean;
   toolbar?: ReactNode;
   children: ReactNode;
 }) {
@@ -38,20 +36,17 @@ export function FlowColumn({
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-1.5">
             <h2 className="truncate text-[13px] font-semibold tracking-tight">{title}</h2>
-            {live ? (
-              <span className="animate-live-pulse size-1.5 shrink-0 rounded-full bg-success" />
-            ) : null}
           </div>
           {meta ? <p className="truncate text-[11px] text-muted-foreground">{meta}</p> : null}
         </div>
-        <span
+        {/* <span
           className={cn(
             "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums",
             badge,
           )}
         >
           {count}
-        </span>
+        </span> */}
       </header>
       {toolbar ? <div className="mt-2">{toolbar}</div> : null}
       <div className="mt-2 min-h-0 flex-1">{children}</div>
@@ -60,20 +55,23 @@ export function FlowColumn({
 }
 
 export function LeadRow({
+  as = "li",
   name,
   detail,
   badge,
   action,
   isNew,
 }: {
+  as?: "li" | "div";
   name: string;
   detail: string;
   badge?: ReactNode;
   action?: ReactNode;
   isNew?: boolean;
 }) {
+  const Component = as;
   return (
-    <li
+    <Component
       className={cn(
         "group grid h-[52px] grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg border border-border px-2.5 transition-colors hover:bg-accent/60",
         isNew && "animate-lead-enter",
@@ -91,7 +89,7 @@ export function LeadRow({
           </span>
         ) : null}
       </div>
-    </li>
+    </Component>
   );
 }
 
@@ -99,7 +97,10 @@ export function QueueSkeleton({ rows = 4 }: { rows?: number }) {
   return (
     <ul className="space-y-1.5">
       {Array.from({ length: rows }).map((_, i) => (
-        <li key={i} className="h-[52px] animate-pulse rounded-lg border border-border bg-muted/50" />
+        <li
+          key={i}
+          className="h-[52px] animate-pulse rounded-lg border border-border bg-muted/50"
+        />
       ))}
     </ul>
   );
@@ -114,7 +115,9 @@ export function QueueEmpty({ text }: { text: string }) {
 }
 
 export function MoreRow({ count }: { count: number }) {
-  return <p className="pt-1.5 text-center text-[11px] text-muted-foreground">+{count} leads khác</p>;
+  return (
+    <p className="pt-1.5 text-center text-[11px] text-muted-foreground">+{count} leads khác</p>
+  );
 }
 
 /** Connector giữa 2 cột: ngang trên desktop, dọc trên mobile. */
@@ -127,7 +130,7 @@ export function FlowLink({
   label: string;
   active?: boolean;
   text?: string;
-  flightKey?: number | undefined;
+  flightKey?: number;
 }) {
   return (
     <div
@@ -153,7 +156,6 @@ export function FlowLink({
           className="animate-flow-particle absolute top-1/2 left-0 size-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]"
           style={{ ["--flow-distance" as string]: "2.5rem" }}
         />
-
         {active ? (
           <span
             key={flightKey}

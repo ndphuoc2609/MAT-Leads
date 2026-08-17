@@ -76,7 +76,7 @@
   --radius: 0.75rem;
   --background: oklch(0.972 0.008 247);
   --foreground: oklch(0.24 0.045 259);
-  --navy: oklch(0.29 0.062 262);
+  --navy: #6f0000;
   --navy-foreground: oklch(0.98 0.005 247);
   --navy-muted: oklch(0.78 0.03 250);
   --success: oklch(0.6 0.13 155);
@@ -294,4 +294,3 @@
     animation-iteration-count: 1;
   }
 }
-
