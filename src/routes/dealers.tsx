@@ -99,7 +99,7 @@ function DealerLeadsPage() {
           </div>
         </header>
 
-        <div className="grid gap-3 md:grid-cols-[240px_minmax(0,1fr)]">
+        <div className="grid gap-3 md:grid-cols-[320px_minmax(0,1fr)] lg:grid-cols-[360px_minmax(0,1fr)]">
           <aside className="card-surface min-w-0 p-3">
             <SearchField
               value={dealerQuery}
