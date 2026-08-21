@@ -3,6 +3,7 @@ export type CustomerLead = {
   customer_id: string;
   full_name: string | null;
   car_interest: string | null;
+  callcenter_note: string | null;
   dealer: string;
   phone: string;
   confirmed_at: string | null;

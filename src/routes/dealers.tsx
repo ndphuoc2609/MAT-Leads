@@ -230,7 +230,7 @@ function DealerLeadsPage() {
               </div>
             </header>
             <div className="mt-3 overflow-x-auto">
-              <table className="w-full min-w-[720px] table-fixed border-collapse text-left">
+              <table className="w-full min-w-[900px] table-fixed border-collapse text-left">
                 <thead>
                   <tr className="border-b border-border text-[10px] font-medium uppercase text-muted-foreground">
                     <th className="w-12 px-0 py-2 font-medium">STT</th>
@@ -238,13 +238,14 @@ function DealerLeadsPage() {
                     <th className="w-[13%] px-0 py-2 font-medium">Quan tâm xe</th>
                     <th className="w-[16%] px-0 py-2 font-medium">Số điện thoại</th>
                     <th className="w-[21%] px-0 py-2 font-medium">Ngày xác nhận</th>
+                    <th className="w-[22%] px-0 py-2 font-medium">CallCenter Note</th>
                     <th className="px-0 py-2 font-medium">File ghi âm</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loadingLeads ? (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-xs text-muted-foreground">
+                      <td colSpan={7} className="py-12 text-center text-xs text-muted-foreground">
                         Đang tải danh sách lead...
                       </td>
                     </tr>
@@ -335,6 +336,11 @@ function DealerLeadRow({ lead, index }: { lead: CustomerLead; index: number }) {
       <td className="py-3 pr-3 font-medium tabular-nums">{lead.phone}</td>
       <td className="py-3 pr-3 text-muted-foreground tabular-nums">
         {formatDate(lead.confirmed_at)}
+      </td>
+      <td className="py-3 pr-3">
+        <p className="whitespace-pre-wrap break-words text-muted-foreground">
+          {lead.callcenter_note || "—"}
+        </p>
       </td>
       <td className="py-3">
         <RecordingPlayer recordings={lead.recordings} />
