@@ -53,7 +53,6 @@ function Dashboard() {
     .sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
 
   const total = leads.length;
-  const called = summary?.called_total ?? 0;
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-navy text-navy-foreground">
@@ -95,7 +94,6 @@ function Dashboard() {
           interested={summary?.total_interested ?? 0}
           addedToday={summary?.added_today ?? 0}
           processing={summary?.processing_today ?? 0}
-          called={summary?.called_total ?? 0}
           assignedDealers={summary?.assigned_dealers ?? 0}
           loading={loading}
         />
@@ -117,7 +115,6 @@ function Dashboard() {
 
           <CallCenterSection
             leads={callLeads}
-            called={called}
             total={total}
             loading={loading}
             onComplete={completeLead}

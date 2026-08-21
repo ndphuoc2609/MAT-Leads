@@ -1,5 +1,5 @@
 import { ArrowRight, Facebook } from "lucide-react";
-import { FlowColumn, LeadRow, MoreRow, QueueEmpty, QueueSkeleton } from "./flow-bits";
+import { FlowColumn, LeadRow, QueueEmpty, QueueSkeleton } from "./flow-bits";
 import { timeAgo, type Lead } from "@/lib/leads-data";
 
 export function MetaLeadsSection({
@@ -54,7 +54,6 @@ export function MetaLeadsSection({
               />
             ))}
           </ul>
-          {leads.length > 5 ? <MoreRow count={leads.length - 5} /> : null}
         </>
       )}
     </FlowColumn>

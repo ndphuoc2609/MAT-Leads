@@ -1,5 +1,5 @@
 import { CheckCircle2 } from "lucide-react";
-import { FlowColumn, LeadRow, MoreRow, QueueEmpty, QueueSkeleton } from "./flow-bits";
+import { FlowColumn, LeadRow, QueueEmpty, QueueSkeleton } from "./flow-bits";
 import { ProcessedStatusBadge } from "./ui-bits";
 import { clockTime, type Lead } from "@/lib/leads-data";
 
@@ -37,7 +37,6 @@ export function ProcessedSection({ leads, loading }: { leads: Lead[]; loading: b
               />
             ))}
           </ul>
-          {leads.length > 5 ? <MoreRow count={leads.length - 5} /> : null}
         </>
       )}
     </FlowColumn>

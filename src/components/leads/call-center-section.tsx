@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Headphones, MoreHorizontal } from "lucide-react";
-import { FlowColumn, LeadRow, MoreRow, QueueEmpty, QueueSkeleton } from "./flow-bits";
+import { FlowColumn, LeadRow, QueueEmpty, QueueSkeleton } from "./flow-bits";
 import { CallStatusBadge } from "./ui-bits";
 import { type Lead, type Outcome } from "@/lib/leads-data";
 
@@ -13,37 +13,21 @@ const OUTCOMES: [Outcome, string][] = [
 
 export function CallCenterSection({
   leads,
-  called,
-  total,
   loading,
   onComplete,
 }: {
   leads: Lead[];
-  called: number;
-  total: number;
   loading: boolean;
   onComplete: (id: string, outcome: Outcome) => void;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const visible = leads.slice(0, 5);
-  const pct = total ? Math.round((called / total) * 100) : 0;
 
   return (
     <FlowColumn
       title="Call Center"
-      meta={`${called}/${total} lead đã gọi`}
       icon={<Headphones className="size-3.5" />}
       count={leads.length}
-      toolbar={
-        <div className="space-y-2">
-          <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-500"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-        </div>
-      }
     >
       {loading ? (
         <QueueSkeleton rows={5} />
@@ -90,7 +74,6 @@ export function CallCenterSection({
               </li>
             ))}
           </ul>
-          {leads.length > 5 ? <MoreRow count={leads.length - 5} /> : null}
         </>
       )}
     </FlowColumn>

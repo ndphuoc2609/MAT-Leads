@@ -114,12 +114,6 @@ export function QueueEmpty({ text }: { text: string }) {
   );
 }
 
-export function MoreRow({ count }: { count: number }) {
-  return (
-    <p className="pt-1.5 text-center text-[11px] text-muted-foreground">+{count} leads khác</p>
-  );
-}
-
 /** Connector giữa 2 cột: ngang trên desktop, dọc trên mobile. */
 export function FlowLink({
   label,
