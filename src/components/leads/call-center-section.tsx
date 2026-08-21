@@ -24,11 +24,7 @@ export function CallCenterSection({
   const visible = leads.slice(0, 5);
 
   return (
-    <FlowColumn
-      title="Call Center"
-      icon={<Headphones className="size-3.5" />}
-      count={leads.length}
-    >
+    <FlowColumn title="Call Center" icon={<Headphones className="size-3.5" />} count={leads.length}>
       {loading ? (
         <QueueSkeleton rows={5} />
       ) : visible.length === 0 ? (

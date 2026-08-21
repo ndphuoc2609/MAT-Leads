@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Building2, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ArrowDownUp, ArrowLeft, Building2, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { RecordingPlayer } from "@/components/leads/recording-player";
 import {
@@ -37,6 +37,7 @@ function DealerLeadsPage() {
   const [dealers, setDealers] = useState<CustomerDealer[]>([]);
   const [selectedDealer, setSelectedDealer] = useState(urlDealer ?? "");
   const [dealerQuery, setDealerQuery] = useState("");
+  const [dealerSort, setDealerSort] = useState<"count-desc" | "name-asc">("count-desc");
   const [leadQuery, setLeadQuery] = useState("");
   const [leads, setLeads] = useState<CustomerLead[]>([]);
   const [page, setPage] = useState(1);
@@ -98,15 +99,16 @@ function DealerLeadsPage() {
     return () => window.clearTimeout(timer);
   }, [leadQuery, page, selectedDealer, retryKey]);
 
-  const filteredDealers = useMemo(
-    () =>
-      dealers.filter((item) =>
-        item.dealer
-          .toLocaleLowerCase("vi-VN")
-          .includes(dealerQuery.toLocaleLowerCase("vi-VN").trim()),
-      ),
-    [dealerQuery, dealers],
-  );
+  const filteredDealers = useMemo(() => {
+    const query = dealerQuery.toLocaleLowerCase("vi-VN").trim();
+    return dealers
+      .filter((item) => item.dealer.toLocaleLowerCase("vi-VN").includes(query))
+      .sort((a, b) =>
+        dealerSort === "count-desc"
+          ? b.lead_count - a.lead_count || a.dealer.localeCompare(b.dealer, "vi")
+          : a.dealer.localeCompare(b.dealer, "vi"),
+      );
+  }, [dealerQuery, dealerSort, dealers]);
   const pageCount = Math.max(1, Math.ceil(total / 20));
   const selectDealer = async (dealer: string) => {
     setSelectedDealer(dealer);
@@ -147,12 +149,30 @@ function DealerLeadsPage() {
         ) : null}
         <div className="grid gap-3 md:grid-cols-[320px_minmax(0,1fr)] lg:grid-cols-[360px_minmax(0,1fr)]">
           <aside className="card-surface min-w-0 p-3">
-            <SearchField
-              value={dealerQuery}
-              onChange={setDealerQuery}
-              placeholder="Lọc đại lý..."
-              label="Lọc danh sách đại lý"
-            />
+            <div className="flex items-center gap-1.5">
+              <div className="min-w-0 flex-1">
+                <SearchField
+                  value={dealerQuery}
+                  onChange={setDealerQuery}
+                  placeholder="Lọc đại lý..."
+                  label="Lọc danh sách đại lý"
+                />
+              </div>
+              <label className="relative shrink-0" title="Sắp xếp đại lý">
+                <ArrowDownUp className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <select
+                  aria-label="Sắp xếp đại lý"
+                  value={dealerSort}
+                  onChange={(event) =>
+                    setDealerSort(event.target.value as "count-desc" | "name-asc")
+                  }
+                  className="h-9 w-10 cursor-pointer appearance-none rounded-lg border border-border bg-surface pl-8 pr-2 text-[0px] outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="count-desc">Nhiều lead nhất</option>
+                  <option value="name-asc">Tên A–Z</option>
+                </select>
+              </label>
+            </div>
             {loadingDealers ? (
               <div className="mt-2 space-y-1.5">
                 {Array.from({ length: 6 }).map((_, i) => (
