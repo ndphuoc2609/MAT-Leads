@@ -119,7 +119,7 @@ function DealerLeadsPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="mx-auto w-full max-w-[1400px] px-3 py-4 sm:px-5">
+      <div className="w-full px-3 py-4 sm:px-5">
         <header className="mb-4 flex items-center gap-3">
           <Link
             to="/"
@@ -230,16 +230,16 @@ function DealerLeadsPage() {
               </div>
             </header>
             <div className="mt-3 overflow-x-auto">
-              <table className="w-full min-w-[900px] table-fixed border-collapse text-left">
+              <table className="w-full min-w-[1100px] table-fixed border-collapse text-left">
                 <thead>
                   <tr className="border-b border-border text-[10px] font-medium uppercase text-muted-foreground">
                     <th className="w-12 px-0 py-2 font-medium">STT</th>
-                    <th className="w-[22%] px-0 py-2 font-medium">Tên khách hàng</th>
-                    <th className="w-[13%] px-0 py-2 font-medium">Quan tâm xe</th>
-                    <th className="w-[16%] px-0 py-2 font-medium">Số điện thoại</th>
-                    <th className="w-[21%] px-0 py-2 font-medium">Ngày xác nhận</th>
-                    <th className="w-[22%] px-0 py-2 font-medium">CallCenter Note</th>
-                    <th className="px-0 py-2 font-medium">File ghi âm</th>
+                    <th className="w-[18%] px-0 py-2 font-medium">Tên khách hàng</th>
+                    <th className="w-[14%] px-0 py-2 font-medium">Quan tâm xe</th>
+                    <th className="w-[15%] px-0 py-2 font-medium">Số điện thoại</th>
+                    <th className="w-[17%] px-0 py-2 font-medium">Ngày xác nhận</th>
+                    <th className="w-[24%] px-0 py-2 font-medium">CallCenter Note</th>
+                    <th className="w-[12%] px-0 py-2 font-medium">File ghi âm</th>
                   </tr>
                 </thead>
                 <tbody>
