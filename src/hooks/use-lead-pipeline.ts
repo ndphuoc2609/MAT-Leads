@@ -65,7 +65,8 @@ export function useLeadPipeline() {
   const previous = useRef<Snapshot | null>(null);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const isInitialLoad = previous.current === null;
+    if (isInitialLoad) setLoading(true);
     try {
       const data = await fetchDashboardPipeline();
       const current: Snapshot = {
@@ -105,7 +106,7 @@ export function useLeadPipeline() {
     } catch {
       setError("Không thể tải dữ liệu dashboard");
     } finally {
-      setLoading(false);
+      if (isInitialLoad) setLoading(false);
     }
   }, []);
 
