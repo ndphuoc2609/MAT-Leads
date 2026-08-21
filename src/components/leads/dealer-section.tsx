@@ -45,6 +45,7 @@ export function DealerSection({
         </div>
         <Link
           to="/dealers"
+          search={{ dealer: "" }}
           className="ml-auto inline-flex h-7 shrink-0 items-center gap-1 rounded-full border border-border px-2.5 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
         >
           Xem tất cả

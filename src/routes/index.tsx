@@ -7,7 +7,7 @@ import { CallCenterSection } from "@/components/leads/call-center-section";
 import { ProcessedSection } from "@/components/leads/processed-section";
 import { DealerSection } from "@/components/leads/dealer-section";
 import { FlowLink } from "@/components/leads/flow-bits";
-import { SUCCESS_OUTCOMES, clockTime } from "@/lib/leads-data";
+import { clockTime } from "@/lib/leads-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -34,6 +34,8 @@ export const Route = createFileRoute("/")({
 function Dashboard() {
   const {
     leads,
+    summary,
+    error,
     loading,
     now,
     updatedAt,
@@ -51,9 +53,7 @@ function Dashboard() {
     .sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
 
   const total = leads.length;
-  const called = leads.filter((lead) => lead.stage !== "meta").length;
-  const successful = leads.filter((l) => l.outcome && SUCCESS_OUTCOMES.includes(l.outcome)).length;
-  const assignedDealers = new Set(leads.flatMap((lead) => (lead.dealer ? [lead.dealer] : []))).size;
+  const called = summary?.called_total ?? 0;
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-navy text-navy-foreground">
@@ -74,9 +74,9 @@ function Dashboard() {
               </p>
             </div>
             <button
-              onClick={refresh}
-              title="Đặt lại dữ liệu demo"
-              aria-label="Đặt lại dữ liệu demo"
+              onClick={() => void refresh()}
+              title="Làm mới dữ liệu dashboard"
+              aria-label="Làm mới dữ liệu dashboard"
               className="grid size-9 place-items-center rounded-lg bg-navy-foreground/10 transition-colors hover:bg-navy-foreground/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-foreground"
             >
               <RefreshCw className={cn("size-4", loading && "animate-spin")} />
@@ -86,11 +86,17 @@ function Dashboard() {
       </header>
 
       <main className="mx-auto max-w-[1440px] space-y-3 px-4 py-4 sm:px-6 lg:px-8">
+        {error ? (
+          <p className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+            Không thể tải số liệu dashboard
+          </p>
+        ) : null}
         <KpiRow
-          interested={successful}
-          processing={callLeads.length}
-          called={called}
-          assignedDealers={assignedDealers}
+          interested={summary?.total_interested ?? 0}
+          addedToday={summary?.added_today ?? 0}
+          processing={summary?.processing_today ?? 0}
+          called={summary?.called_total ?? 0}
+          assignedDealers={summary?.assigned_dealers ?? 0}
           loading={loading}
         />
 

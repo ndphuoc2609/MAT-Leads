@@ -1,84 +1,119 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Building2, Download, Pause, Play, Search } from "lucide-react";
-import { useMemo, useState } from "react";
-import { buildLeads, DEALERS, type Lead } from "@/lib/leads-data";
-import { getLeadSnapshot } from "@/lib/lead-snapshot";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, Building2, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { RecordingPlayer } from "@/components/leads/recording-player";
+import {
+  fetchCustomerDealers,
+  fetchCustomerLeads,
+  type CustomerDealer,
+  type CustomerLead,
+} from "@/lib/customer-processing-api";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dealers")({
   validateSearch: (search: Record<string, unknown>) => ({
-    dealer: typeof search.dealer === "string" ? search.dealer : undefined,
+    dealer: typeof search["dealer"] === "string" ? search["dealer"] : undefined,
   }),
   head: () => ({
     meta: [
       { title: "Lead theo đại lý · Hyundai Lead Operations" },
-      {
-        name: "description",
-        content: "Danh sách lead đã phân bổ theo từng đại lý Hyundai.",
-      },
+      { name: "description", content: "Danh sách lead đã phân bổ theo từng đại lý Hyundai." },
     ],
   }),
   component: DealerLeadsPage,
 });
 
-const MOCK_NOW = Date.UTC(2026, 7, 17, 14, 30);
-
-function normalize(value: string) {
-  return value.toLocaleLowerCase("vi-VN").trim();
-}
-
-function formatDateTime(timestamp: number) {
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(timestamp);
-}
-
-function recordingMeta(lead: Lead) {
-  const number = Number(lead.id.replace(/\D/g, ""));
-  const seconds = 62 + (number % 119);
-  return {
-    duration: `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`,
-    progress: 28 + (number % 38),
-  };
+function formatDate(value: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "—"
+    : new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "short" }).format(date);
 }
 
 function DealerLeadsPage() {
-  const { dealer } = Route.useSearch();
-  const leads = useMemo(
-    () => (getLeadSnapshot() ?? buildLeads(MOCK_NOW)).filter((lead) => lead.dealer),
-    [],
-  );
-  const [selectedDealer, setSelectedDealer] = useState(
-    dealer && DEALERS.includes(dealer) ? dealer : (DEALERS[0] as string),
-  );
+  const { dealer: urlDealer } = Route.useSearch();
+  const navigate = useNavigate({ from: "/dealers" });
+  const [dealers, setDealers] = useState<CustomerDealer[]>([]);
+  const [selectedDealer, setSelectedDealer] = useState(urlDealer ?? "");
   const [dealerQuery, setDealerQuery] = useState("");
   const [leadQuery, setLeadQuery] = useState("");
-  const [playingId, setPlayingId] = useState<string | null>(null);
+  const [leads, setLeads] = useState<CustomerLead[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loadingDealers, setLoadingDealers] = useState(true);
+  const [loadingLeads, setLoadingLeads] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
-  const dealerCounts = useMemo(() => {
-    const counts = new Map(DEALERS.map((dealer) => [dealer, 0]));
-    for (const lead of leads) {
-      if (lead.dealer) counts.set(lead.dealer, (counts.get(lead.dealer) ?? 0) + 1);
+  const loadDealers = useCallback(async () => {
+    setLoadingDealers(true);
+    setError(null);
+    try {
+      const data = await fetchCustomerDealers();
+      setDealers(data);
+      const preferred =
+        urlDealer && data.some((item) => item.dealer === urlDealer)
+          ? urlDealer
+          : (data[0]?.dealer ?? "");
+      setSelectedDealer(preferred);
+      if (preferred !== urlDealer)
+        await navigate({ search: { dealer: preferred || undefined }, replace: true });
+    } catch {
+      setError("Không thể tải danh sách đại lý. Vui lòng thử lại.");
+    } finally {
+      setLoadingDealers(false);
     }
-    return counts;
-  }, [leads]);
+  }, [navigate, urlDealer]);
+  useEffect(() => {
+    void loadDealers();
+  }, [loadDealers]);
+  useEffect(() => {
+    if (urlDealer && dealers.some((item) => item.dealer === urlDealer))
+      setSelectedDealer(urlDealer);
+  }, [dealers, urlDealer]);
 
-  const filteredDealers = DEALERS.filter((dealer) =>
-    normalize(dealer).includes(normalize(dealerQuery)),
+  useEffect(() => {
+    if (!selectedDealer) return;
+    const timer = window.setTimeout(
+      async () => {
+        setLoadingLeads(true);
+        setError(null);
+        try {
+          const result = await fetchCustomerLeads({
+            dealer: selectedDealer,
+            search: leadQuery,
+            page,
+          });
+          setLeads(result.items);
+          setTotal(result.total);
+        } catch {
+          setError("Không thể tải danh sách lead. Vui lòng thử lại.");
+        } finally {
+          setLoadingLeads(false);
+        }
+      },
+      leadQuery ? 300 : 0,
+    );
+    return () => window.clearTimeout(timer);
+  }, [leadQuery, page, selectedDealer, retryKey]);
+
+  const filteredDealers = useMemo(
+    () =>
+      dealers.filter((item) =>
+        item.dealer
+          .toLocaleLowerCase("vi-VN")
+          .includes(dealerQuery.toLocaleLowerCase("vi-VN").trim()),
+      ),
+    [dealerQuery, dealers],
   );
-
-  const selectedLeads = leads
-    .filter((lead) => lead.dealer === selectedDealer)
-    .filter((lead) => {
-      const query = normalize(leadQuery);
-      return [lead.name, lead.phone, lead.model].some((value) => normalize(value).includes(query));
-    })
-    .sort((a, b) => (b.assignedAt ?? 0) - (a.assignedAt ?? 0));
+  const pageCount = Math.max(1, Math.ceil(total / 20));
+  const selectDealer = async (dealer: string) => {
+    setSelectedDealer(dealer);
+    setLeadQuery("");
+    setPage(1);
+    await navigate({ search: { dealer }, replace: true });
+  };
 
   return (
     <main className="min-h-screen bg-background">
@@ -86,7 +121,7 @@ function DealerLeadsPage() {
         <header className="mb-4 flex items-center gap-3">
           <Link
             to="/"
-            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-medium shadow-sm transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-medium shadow-sm hover:bg-accent"
           >
             <ArrowLeft className="size-3.5" />
             Quay lại
@@ -94,11 +129,22 @@ function DealerLeadsPage() {
           <div className="min-w-0">
             <h1 className="truncate text-lg font-bold tracking-tight">Lead theo đại lý</h1>
             <p className="text-[11px] text-muted-foreground">
-              {leads.length} lead đã phân bổ · {DEALERS.length} đại lý
+              {total} lead đã phân bổ · {dealers.length} đại lý
             </p>
           </div>
         </header>
-
+        {error ? (
+          <div className="mb-3 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+            <span>{error}</span>
+            <button
+              type="button"
+              onClick={() => setRetryKey((key) => key + 1)}
+              className="rounded border border-destructive/30 px-2 py-1 font-medium hover:bg-destructive/10"
+            >
+              Thử lại
+            </button>
+          </div>
+        ) : null}
         <div className="grid gap-3 md:grid-cols-[320px_minmax(0,1fr)] lg:grid-cols-[360px_minmax(0,1fr)]">
           <aside className="card-surface min-w-0 p-3">
             <SearchField
@@ -107,59 +153,62 @@ function DealerLeadsPage() {
               placeholder="Lọc đại lý..."
               label="Lọc danh sách đại lý"
             />
-            {filteredDealers.length === 0 ? (
+            {loadingDealers ? (
+              <div className="mt-2 space-y-1.5">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-9 animate-pulse rounded-lg bg-muted/50" />
+                ))}
+              </div>
+            ) : filteredDealers.length === 0 ? (
               <p className="py-7 text-center text-xs text-muted-foreground">
                 Không tìm thấy đại lý.
               </p>
             ) : (
               <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1 md:max-h-[calc(100vh-9rem)] md:flex-col md:overflow-y-auto md:pr-1 md:pb-0">
-                {filteredDealers.map((dealer) => {
-                  const selected = dealer === selectedDealer;
-                  return (
-                    <button
-                      key={dealer}
-                      type="button"
-                      onClick={() => {
-                        setSelectedDealer(dealer);
-                        setLeadQuery("");
-                      }}
-                      className={cn(
-                        "flex h-9 min-w-[205px] items-center gap-2 rounded-lg border border-transparent px-2 text-left text-xs transition-colors md:min-w-0 md:w-full",
-                        selected
-                          ? "border-border bg-primary/10 font-semibold text-primary"
-                          : "text-foreground hover:bg-accent",
-                      )}
-                    >
-                      <Building2 className="size-3.5 shrink-0 text-current opacity-70" />
-                      <span className="min-w-0 flex-1 truncate">{dealer}</span>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground tabular-nums">
-                        {dealerCounts.get(dealer) ?? 0}
-                      </span>
-                    </button>
-                  );
-                })}
+                {filteredDealers.map((item) => (
+                  <button
+                    key={item.dealer}
+                    type="button"
+                    onClick={() => void selectDealer(item.dealer)}
+                    className={cn(
+                      "flex h-9 min-w-[205px] items-center gap-2 rounded-lg border border-transparent px-2 text-left text-xs transition-colors md:min-w-0 md:w-full",
+                      item.dealer === selectedDealer
+                        ? "border-border bg-primary/10 font-semibold text-primary"
+                        : "hover:bg-accent",
+                    )}
+                  >
+                    <Building2 className="size-3.5 shrink-0 opacity-70" />
+                    <span className="min-w-0 flex-1 truncate">{item.dealer}</span>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground tabular-nums">
+                      {item.lead_count}
+                    </span>
+                  </button>
+                ))}
               </div>
             )}
           </aside>
-
           <section className="card-surface min-w-0 overflow-hidden p-3">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
-                <h2 className="truncate text-[13px] font-semibold">{selectedDealer}</h2>
+                <h2 className="truncate text-[13px] font-semibold">
+                  {selectedDealer || "Chưa chọn đại lý"}
+                </h2>
                 <p className="text-[10px] text-muted-foreground">
-                  {dealerCounts.get(selectedDealer) ?? 0} lead · số điện thoại đã được ẩn
+                  {total} lead · số điện thoại đã được ẩn
                 </p>
               </div>
               <div className="w-[190px] max-w-full sm:w-[240px]">
                 <SearchField
                   value={leadQuery}
-                  onChange={setLeadQuery}
+                  onChange={(value) => {
+                    setLeadQuery(value);
+                    setPage(1);
+                  }}
                   placeholder="Tìm lead..."
                   label="Tìm lead theo tên, số điện thoại hoặc mẫu xe"
                 />
               </div>
             </header>
-
             <div className="mt-3 overflow-x-auto">
               <table className="w-full min-w-[720px] table-fixed border-collapse text-left">
                 <thead>
@@ -173,31 +222,57 @@ function DealerLeadsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {selectedLeads.map((lead, index) => (
-                    <DealerLeadRow
-                      key={lead.id}
-                      lead={lead}
-                      index={index}
-                      playing={playingId === lead.id}
-                      onTogglePlay={() => setPlayingId(playingId === lead.id ? null : lead.id)}
-                    />
-                  ))}
+                  {loadingLeads ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-xs text-muted-foreground">
+                        Đang tải danh sách lead...
+                      </td>
+                    </tr>
+                  ) : (
+                    leads.map((lead, index) => (
+                      <DealerLeadRow
+                        key={lead.customer_id}
+                        lead={lead}
+                        index={(page - 1) * 20 + index}
+                      />
+                    ))
+                  )}
                 </tbody>
               </table>
-              {selectedLeads.length === 0 ? (
+              {!loadingLeads && leads.length === 0 ? (
                 <div className="border-t border-border py-12 text-center">
                   <Building2 className="mx-auto size-7 text-muted-foreground/50" />
                   <p className="mt-2 text-xs font-medium">
                     {leadQuery ? "Không tìm thấy lead phù hợp." : "Đại lý chưa có lead."}
                   </p>
-                  <p className="mt-1 text-[10px] text-muted-foreground">
-                    {leadQuery
-                      ? "Thử tìm bằng tên, số điện thoại hoặc mẫu xe khác."
-                      : "Lead mới sẽ xuất hiện tại đây sau khi được phân bổ."}
-                  </p>
                 </div>
               ) : null}
             </div>
+            <footer className="mt-3 flex items-center justify-between border-t border-border pt-3">
+              <span className="text-[10px] text-muted-foreground">
+                Trang {page} / {pageCount}
+              </span>
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  disabled={page <= 1 || loadingLeads}
+                  onClick={() => setPage((value) => value - 1)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-[10px] disabled:opacity-40"
+                >
+                  <ChevronLeft className="size-3" />
+                  Trang trước
+                </button>
+                <button
+                  type="button"
+                  disabled={page >= pageCount || loadingLeads}
+                  onClick={() => setPage((value) => value + 1)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-[10px] disabled:opacity-40"
+                >
+                  Trang sau
+                  <ChevronRight className="size-3" />
+                </button>
+              </div>
+            </footer>
           </section>
         </div>
       </div>
@@ -229,61 +304,20 @@ function SearchField({
     </label>
   );
 }
-
-function DealerLeadRow({
-  lead,
-  index,
-  playing,
-  onTogglePlay,
-}: {
-  lead: Lead;
-  index: number;
-  playing: boolean;
-  onTogglePlay: () => void;
-}) {
-  const recording = recordingMeta(lead);
-
+function DealerLeadRow({ lead, index }: { lead: CustomerLead; index: number }) {
   return (
     <tr className="border-b border-border text-xs transition-colors last:border-b-0 hover:bg-accent/40">
       <td className="py-3 text-muted-foreground tabular-nums">{index + 1}</td>
       <td className="py-3 pr-3">
-        <p className="truncate font-medium">{lead.name}</p>
+        <p className="truncate font-medium">{lead.full_name || "—"}</p>
       </td>
-      <td className="py-3 pr-3 font-medium">{lead.model}</td>
-      <td className="py-3 pr-3 font-medium tabular-nums">******{lead.phone.slice(-3)}</td>
+      <td className="py-3 pr-3 font-medium">{lead.car_interest || "—"}</td>
+      <td className="py-3 pr-3 font-medium tabular-nums">{lead.phone}</td>
       <td className="py-3 pr-3 text-muted-foreground tabular-nums">
-        {formatDateTime(lead.assignedAt ?? lead.completedAt ?? lead.receivedAt)}
+        {formatDate(lead.confirmed_at)}
       </td>
       <td className="py-3">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onTogglePlay}
-            aria-label={
-              playing ? `Tạm dừng ghi âm của ${lead.name}` : `Phát ghi âm của ${lead.name}`
-            }
-            className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
-          >
-            {playing ? <Pause className="size-3" /> : <Play className="size-3 fill-current" />}
-          </button>
-          <span className="h-1 min-w-12 flex-1 overflow-hidden rounded-full bg-muted">
-            <span
-              className={cn("block h-full rounded-full bg-primary/55", playing && "animate-pulse")}
-              style={{ width: `${recording.progress}%` }}
-            />
-          </span>
-          <span className="w-8 text-right text-[10px] text-muted-foreground tabular-nums">
-            {recording.duration}
-          </span>
-          <button
-            type="button"
-            aria-label={`Tải file ghi âm của ${lead.name}`}
-            title="Tải file ghi âm"
-            className="grid size-6 shrink-0 place-items-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
-          >
-            <Download className="size-3.5" />
-          </button>
-        </div>
+        <RecordingPlayer recordings={lead.recordings} />
       </td>
     </tr>
   );

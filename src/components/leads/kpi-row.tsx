@@ -3,27 +3,28 @@ import { Building2, Headphones, Heart, PhoneCall, type LucideIcon } from "lucide
 type SupportingKpi = {
   label: string;
   value: number;
-  delta: string;
   icon: LucideIcon;
 };
 
 export function KpiRow({
   interested,
+  addedToday,
   processing,
   called,
   assignedDealers,
   loading,
 }: {
   interested: number;
+  addedToday: number;
   processing: number;
   called: number;
   assignedDealers: number;
   loading: boolean;
 }) {
   const supportingItems: SupportingKpi[] = [
-    { label: "Lead đang xử lý", value: processing, delta: "+3", icon: Headphones },
-    { label: "Lead đã gọi", value: called, delta: "+6", icon: PhoneCall },
-    { label: "Đại lý được phân bổ", value: assignedDealers, delta: "+2", icon: Building2 },
+    { label: "Lead đang xử lý", value: processing, icon: Headphones },
+    { label: "Lead đã gọi", value: called, icon: PhoneCall },
+    { label: "Đại lý được phân bổ", value: assignedDealers, icon: Building2 },
   ];
 
   return (
@@ -38,7 +39,9 @@ export function KpiRow({
         )}
         <div className="min-w-0">
           <p className="truncate text-sm font-bold tracking-tight">Tổng lead quan tâm</p>
-          <p className="mt-1 text-[11px] font-medium text-primary-foreground/80">+8 hôm nay</p>
+          <p className="mt-1 text-[11px] font-medium text-primary-foreground/80">
+            +{addedToday} hôm nay
+          </p>
         </div>
       </section>
 
@@ -55,11 +58,8 @@ export function KpiRow({
             {loading ? (
               <div className="mt-1.5 h-7 w-14 animate-pulse rounded bg-muted" />
             ) : (
-              <p className="mt-1 flex items-baseline gap-1.5 text-2xl leading-none font-bold tracking-tight tabular-nums">
+              <p className="mt-1 text-2xl leading-none font-bold tracking-tight tabular-nums">
                 {item.value}
-                <span className="text-[10px] font-medium text-success-foreground">
-                  {item.delta}
-                </span>
               </p>
             )}
           </div>

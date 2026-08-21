@@ -130,7 +130,7 @@ export function FlowLink({
   label: string;
   active?: boolean;
   text?: string;
-  flightKey?: number;
+  flightKey?: number | undefined;
 }) {
   return (
     <div

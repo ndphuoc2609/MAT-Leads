@@ -191,7 +191,7 @@ export function buildLeads(now: number): Lead[] {
       const receivedAt = seedLead.receivedAt - (copy * assignedSeeds.length + index) * 5 * 60_000;
       const completedAt = receivedAt + 18 * 60_000;
 
-      leads.push({
+      const copyLead: Lead = {
         id: `LD-${5000 + copy * 100 + index}`,
         name: `${pick(rng, FIRST)} ${pick(rng, MID)} ${pick(rng, LAST)}`,
         phone: `09${Math.floor(rng() * 90 + 10)}${Math.floor(rng() * 900000 + 100000)}`,
@@ -202,9 +202,10 @@ export function buildLeads(now: number): Lead[] {
         lastCallAt: receivedAt + 8 * 60_000,
         outcome: seedLead.outcome ?? "qualified",
         completedAt,
-        dealer: seedLead.dealer,
         assignedAt: completedAt + Math.floor(rng() * 20 + 2) * 60_000,
-      });
+      };
+      if (seedLead.dealer) copyLead.dealer = seedLead.dealer;
+      leads.push(copyLead);
     });
   }
 
