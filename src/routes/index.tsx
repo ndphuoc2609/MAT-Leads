@@ -9,6 +9,7 @@ import { DealerSection } from "@/components/leads/dealer-section";
 import { FlowLink } from "@/components/leads/flow-bits";
 import { clockTime } from "@/lib/leads-data";
 import { cn } from "@/lib/utils";
+import { clearToken } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -79,6 +80,9 @@ function Dashboard() {
               className="grid size-9 place-items-center rounded-lg bg-navy-foreground/10 transition-colors hover:bg-navy-foreground/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-foreground"
             >
               <RefreshCw className={cn("size-4", loading && "animate-spin")} />
+            </button>
+            <button onClick={() => { clearToken(); window.location.href = "/login"; }} className="rounded-lg bg-navy-foreground/10 px-3 py-2 text-xs hover:bg-navy-foreground/20">
+              Đăng xuất
             </button>
           </div>
         </div>

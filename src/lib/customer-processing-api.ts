@@ -25,8 +25,9 @@ const baseUrl = (import.meta.env["VITE_API_BASE_URL"] || "http://localhost:8000"
 async function request<T>(path: string, params?: URLSearchParams) {
   const url = `${baseUrl}${path}${params ? `?${params.toString()}` : ""}`;
   const response = await fetch(url, {
-    headers: { "X-API-Key": import.meta.env["VITE_API_KEY"] || "" },
+    headers: { Authorization: `Bearer ${getToken() ?? ""}` },
   });
+  if (response.status === 401) { clearToken(); window.location.href = "/login"; }
   if (!response.ok) {
     let detail = "";
     try {
@@ -59,3 +60,4 @@ export function fetchCustomerLeads({
   if (search?.trim()) params.set("search", search.trim());
   return request<CustomerLeadPage>("/api/customer-processing/leads", params);
 }
+import { clearToken, getToken } from "@/lib/auth";

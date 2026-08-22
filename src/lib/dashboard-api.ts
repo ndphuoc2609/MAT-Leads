@@ -30,8 +30,10 @@ export type DashboardPipeline = {
 export async function fetchDashboardPipeline(): Promise<DashboardPipeline> {
   const baseUrl = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:8000";
   const response = await fetch(`${baseUrl}/api/dashboard/pipeline`, {
-    headers: { "X-API-Key": import.meta.env["VITE_API_KEY"] ?? "change-me-api-key" },
+    headers: { Authorization: `Bearer ${getToken() ?? ""}` },
   });
+  if (response.status === 401) { clearToken(); window.location.href = "/login"; }
   if (!response.ok) throw new Error(`Dashboard API failed: ${response.status}`);
   return response.json() as Promise<DashboardPipeline>;
 }
+import { clearToken, getToken } from "@/lib/auth";
