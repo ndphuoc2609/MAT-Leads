@@ -146,7 +146,7 @@ function Dashboard() {
         <DealerSection leads={leads} now={now} loading={loading} />
 
         <p className="pb-2 text-center text-[11px] text-muted-foreground">
-          Dữ liệu demo · {total} leads · Meta Lead Ads → Call Center → Đại lý
+          {total} leads · Meta Lead Ads → Call Center → Đại lý
         </p>
       </main>
     </div>
